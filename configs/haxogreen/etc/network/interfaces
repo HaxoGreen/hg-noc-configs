@@ -1,0 +1,26 @@
+# This file describes the network interfaces available on your system
+# and how to activate them. For more information, see interfaces(5).
+
+# The loopback network interface
+auto lo
+iface lo inet loopback
+
+# The primary network interface
+allow-hotplug eth0
+iface eth0 inet static
+	address 31.22.121.91
+	netmask 255.255.255.248
+	network 31.22.121.88
+	broadcast 31.22.121.95
+	gateway 31.22.121.89
+	# dns-* options are implemented by the resolvconf package, if installed
+	dns-nameservers 172.17.17.17 172.17.16.15
+	dns-search 2036.lc1.conostix.com
+
+# haxogreen <-> hggateway
+auto eth0:0
+allow-hotplug eth0:0
+iface eth0:0 inet static
+    address 10.10.1.1
+    netmask 255.255.255.0
+    up /etc/network/firewall.sh

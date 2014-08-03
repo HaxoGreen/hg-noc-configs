@@ -1,0 +1,51 @@
+### Aruba APs ###
+
+vLAN: 141
+IPs:
+
+10.14.1.10: AP1
+10.14.1.11: AP2
+10.14.1.12: AP3
+10.14.1.13: AP4
+10.14.1.14: AP5
+10.14.1.15: AP6
+10.14.1.16: AP7
+10.14.1.17: AP8
+10.14.1.18: AP9
+10.14.1.19: AP10
+10.14.1.20: AP11
+10.14.1.21: AP12
+
+### Switches ###
+
+10.14.1.40: core switch
+10.14.1.41: hackcenter PoE
+10.14.1.42: chalet PoE
+10.14.1.43: datenklo vir GbiT
+10.14.1.44: Rittersaal PoE
+#10.14.1.45 rittersaal
+10.14.1.46: datenklo hannen
+
+### Uplink ####
+
+Conostix:
+31.22.121.90/29 on your end
+31.22.121.89 as gateway
+
+We'll be routing the whole 31.22.122.0/23 block through 31.22.121.89 so
+you can split this /23 as you wish
+
+## VLANs ###
+
+141 mgmt
+666 haxogreen/haxogreen-open
+667 syn2cat
+
+### Patchpanel ###
+
+1. Datenklo 1
+2. Chalet
+3. Hackcenter
+4. Hackcenter
+5. DSL
+6. Datenklo 2

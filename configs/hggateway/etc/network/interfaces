@@ -1,0 +1,80 @@
+# This file describes the network interfaces available on your system
+# and how to activate them. For more information, see interfaces(5).
+
+# The loopback network interface
+auto lo
+iface lo inet loopback
+
+# The primary network interface
+auto eth0
+iface eth0 inet static
+        address 10.15.1.1
+        netmask 255.255.255.0
+        broadcast 10.15.1.255
+        up /etc/network/firewall.sh
+
+
+# VLAN 141 - mngt
+auto eth0.141
+iface eth0.141 inet static
+        address 10.14.1.1
+        netmask 255.255.255.0
+        broadcast 10.14.1.255
+        vlan_raw_device eth0
+
+
+# VLAN 666 - camp internet public IPs
+auto eth0.666
+iface eth0.666 inet static
+        address 31.22.122.1
+        netmask 255.255.254.0
+        broadcast 31.22.123.255
+        vlan_raw_device eth0
+
+# VLAN 667 - syn2cat staff NAtted
+auto eth0.667
+iface eth0.667 inet static
+        address 10.0.0.1
+        netmask 255.255.255.0
+        broadcast 10.0.0.255
+        vlan_raw_device eth0
+
+
+# Conostix RF uplink
+auto eth3
+allow-hotplug eth3
+iface eth3 inet static
+	address 10.10.1.2
+	netmask 255.255.255.0
+	up /etc/network/firewall.sh
+
+# Conostix RF antenna
+auto eth3:0
+iface eth3:0 inet static
+	address 192.168.1.222
+	netmask 255.255.255.0
+
+# haxogreen <-> hggateway
+#auto eth3:1
+iface eth3:1 inet static
+        address 31.22.121.94
+        netmask 255.255.255.248
+        broadcast 31.22.121.95
+	#gateway 31.22.121.89
+
+
+# DSL uplink
+auto eth1
+iface eth1 inet static
+        address 192.168.178.222
+        netmask 255.255.255.0
+        broadcast 192.168.178.255
+
+#auto tun0
+#iface tun0 inet static
+#       address 10.17.0.2
+#       netmask 255.255.255.0
+#       up ifconfig tun0 multicast
+#       pre-up iptunnel add tun0 mode gre remote  local 169.229.255.134 ttl 255
+#       pointopoint 10.0.201.2
+#       post-down iptunnel del tun0
