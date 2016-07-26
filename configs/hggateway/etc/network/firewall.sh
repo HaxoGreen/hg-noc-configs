@@ -20,6 +20,10 @@ iptables -P INPUT DROP
 #iptables -P OUTPUT DROP
 iptables -P FORWARD DROP
 
+# DROP
+iptables -A INPUT -i eth0.161 -d 10.16.0.0/24 -j DROP
+iptables -A INPUT -i eth0.161 -d 10.17.0.0/24 -j DROP
+
 # INPUT
 iptables -A INPUT -i lo -j ACCEPT
 iptables -A INPUT -d 224.0.0.1 -j DROP
@@ -37,8 +41,8 @@ iptables -A INPUT -p udp -m udp --dport 67 -j ACCEPT
 iptables -A INPUT -p udp -m udp --dport 68 -j ACCEPT
 iptables -A INPUT -p tcp -m tcp --dport 123 -j ACCEPT
 iptables -A INPUT -p udp -m udp --dport 123 -j ACCEPT
-iptables -A INPUT -i eth0.141 -p tcp -m tcp --dport 4949 -j ACCEPT
 iptables -A INPUT -i eth0.141 -j ACCEPT
+#iptables -A INPUT -i eth0.171 -j ACCEPT #test
 
 
 #OUTPUT
@@ -55,25 +59,25 @@ iptables -A FORWARD -p icmp -m icmp --icmp-type 4 -j ACCEPT
 iptables -A FORWARD -p icmp -m icmp --icmp-type 8 -j ACCEPT
 iptables -A FORWARD -p icmp -m icmp --icmp-type 11 -j ACCEPT
 iptables -A FORWARD -i eth0.141 -j ACCEPT
-iptables -A FORWARD -d 192.168.1.0/24 -i eth0.666 -o eth3 -j DROP
-iptables -A FORWARD -i eth0.666 -o tap+ -j ACCEPT
-iptables -A FORWARD -d 31.22.122.1/32 -i tap+ -o eth0.666 -p tcp -m tcp --dport 22 -j ACCEPT
-iptables -A FORWARD -d 31.22.122.1/32 -i tap+ -o eth0.666 -j DROP
-iptables -A FORWARD -d 31.22.122.0/23 -i tap+ -o eth0.666 -j ACCEPT
-iptables -A FORWARD -i eth0.667 -o tap+ -j ACCEPT
-iptables -A FORWARD -d 31.22.122.2/32 -i eth0.666 -j ACCEPT
-iptables -A FORWARD -d 31.22.122.2/32 -i eth0.667 -j ACCEPT
-iptables -A FORWARD -d 10.14.1.10/32 -i eth0.667 -j ACCEPT
-
+iptables -A FORWARD -i eth0.171 -j ACCEPT 
+iptables -A FORWARD -i eth0.161 -o tap+ -j ACCEPT
+iptables -A FORWARD -d 31.22.122.1/32 -i tap+ -o eth0.161 -p tcp -m tcp --dport 22 -j ACCEPT
+iptables -A FORWARD -d 31.22.122.1/32 -i tap+ -o eth0.161 -j DROP
+iptables -A FORWARD -d 31.22.122.0/23 -i tap+ -o eth0.161 -j ACCEPT
+iptables -A FORWARD -i eth0.161 -o tap+ -j ACCEPT
+iptables -A FORWARD -d 31.22.122.2/32 -i eth0.161 -j ACCEPT
+iptables -A FORWARD -d 31.22.122.2/32 -i eth0.171 -j ACCEPT
+iptables -A FORWARD -d 10.14.1.10/32 -i eth0.171 -j ACCEPT
+iptables -A FORWARD -d 192.168.1.0/24 -i eth0.141 -j ACCEPT
 
 iptables -t nat -A POSTROUTING ! -s 31.22.122.0/23 ! -d 192.168.1.0/24 -o tap+ -j MASQUERADE
-iptables -t nat -A POSTROUTING -d 31.22.121.91/32 -o eth1 -j MASQUERADE
-
+iptables -t nat -A POSTROUTING -d 31.22.121.90/32 -o eth1 -j MASQUERADE
+iptables -t nat -A POSTROUTING -s 10.14.1.0/24 -d 192.168.1.0/24 -o eth2 -j MASQUERADE
 
 # wondershaper
-wondershaper tap0 95000 95000
-wondershaper tap1 25000 10000
-
+#wondershaper tap0 95000 95000
+#wondershaper tap1 25000 10000
+#
 iptables -t mangle -A PREROUTING -p icmp -j TOS --set-tos Minimize-Delay
 
 iptables -t mangle -A PREROUTING -p ospf -j TOS --set-tos Minimize-Delay
