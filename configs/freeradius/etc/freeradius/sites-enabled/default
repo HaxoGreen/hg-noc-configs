@@ -1,0 +1,41 @@
+# -*- text -*-
+authorize {
+        preprocess
+
+        suffix
+#        if (Realm == NULL) {
+#                update reply {
+#                      Reply-Message := "Please specify a realm to authenticate with."
+#                }
+#                reject
+#        }
+
+        eap
+}
+
+authenticate {
+        eap
+}
+
+
+preacct {
+        preprocess
+        acct_unique
+#        suffix
+
+}
+
+accounting {
+        detail
+        radutmp
+        exec
+        attr_filter.accounting_response
+}
+
+
+session {
+        radutmp
+}
+post-proxy {
+	eap
+}

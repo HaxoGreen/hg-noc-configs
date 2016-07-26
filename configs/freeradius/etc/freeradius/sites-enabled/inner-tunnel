@@ -1,0 +1,52 @@
+# -*- text -*-
+server inner-tunnel {
+        listen {
+               ipaddr = 127.0.0.1
+               port = 18120
+               type = auth
+        }
+        authorize {
+                suffix
+
+		update control {
+		       Proxy-To-Realm := LOCAL
+		}
+
+		pap
+		mschap
+                eap 
+#                ldap
+
+		files
+ 
+                expiration
+                logintime
+
+        }
+        authenticate {
+                Auth-Type PAP {
+                        pap
+                }
+                Auth-Type MS-CHAP {
+                        mschap
+                }
+                eap
+#		ldap
+        }
+        session {
+                radutmp
+        }
+
+        post-auth {
+                Post-Auth-Type REJECT {
+                        attr_filter.access_reject
+                }
+
+#		User-Name := "anonymous@your-realm.tld"
+        }
+        pre-proxy {
+        }
+        post-proxy {
+                eap
+        }
+} 
