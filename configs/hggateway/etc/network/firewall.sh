@@ -73,6 +73,8 @@ iptables -A FORWARD -d 192.168.1.0/24 -i eth0.141 -j ACCEPT
 iptables -A FORWARD -d 10.14.1.3 -p tcp --dport 80 -j ACCEPT  # iving
 iptables -A FORWARD -d 10.14.1.3 -p tcp --dport 443 -j ACCEPT  # iving
 iptables -A FORWARD -d 10.14.1.3 -p icmp -j ACCEPT  # iving
+iptables -A FORWARD -i tap+ -s 10.16.0.1 -d 10.14.1.3 -p tcp --dport 2003 -j ACCEPT  # iving - grafana
+iptables -A FORWARD -i tap+ -s 10.17.0.1 -d 10.14.1.3 -p tcp --dport 2003 -j ACCEPT  # iving - grafana
 
 
 
