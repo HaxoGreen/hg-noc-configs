@@ -70,6 +70,18 @@ iptables -A FORWARD -d 31.22.122.2/32 -i eth0.171 -j ACCEPT
 iptables -A FORWARD -d 10.14.1.10/32 -i eth0.171 -j ACCEPT
 iptables -A FORWARD -d 192.168.1.0/24 -i eth0.141 -j ACCEPT
 
+iptables -A FORWARD -d 10.14.1.3 -p tcp --dport 80 -j ACCEPT  # iving
+iptables -A FORWARD -d 10.14.1.3 -p tcp --dport 443 -j ACCEPT  # iving
+iptables -A FORWARD -d 10.14.1.3 -p icmp -j ACCEPT  # iving
+
+
+
+# NAT
+iptables -t nat -A PREROUTING -d 31.22.122.222 -j DNAT --to-destination 10.14.1.3
+iptables -t nat -A POSTROUTING -o eth0.141 -d 10.14.1.3 -j SNAT --to-source 10.14.1.1
+
+
+
 iptables -t nat -A POSTROUTING ! -s 31.22.122.0/23 ! -d 192.168.1.0/24 -o tap+ -j MASQUERADE
 iptables -t nat -A POSTROUTING -d 31.22.121.90/32 -o eth1 -j MASQUERADE
 iptables -t nat -A POSTROUTING -s 10.14.1.0/24 -d 192.168.1.0/24 -o eth2 -j MASQUERADE

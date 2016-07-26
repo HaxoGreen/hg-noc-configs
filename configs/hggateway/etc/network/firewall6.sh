@@ -73,6 +73,11 @@ ip6tables -A FORWARD -i tap0 -o eth0.161 -j ACCEPT
 # management rules - VLAN 141
 ip6tables -A FORWARD -o eth0.141 -s 2001:610:120:e120:194:171:96:99 -d 2a02:6f00:1337:100::100/64 -j ACCEPT    # nlnode1.spacefed.net - radius
 ip6tables -A FORWARD -o eth0.141 -s 2001:610:120:e120:194:171:96:98 -d 2a02:6f00:1337:100::100/64 -j ACCEPT    # kleurpotlood.nikhef.nl - radius
+
+
+
+ip6tables -A FORWARD -o eth0.141 -d 2a02:6f00:1337:100:5054:ff:fee2:55db -p tcp --dport 80 -j ACCEPT  # iving
+ip6tables -A FORWARD -o eth0.141 -d 2a02:6f00:1337:100:5054:ff:fee2:55db -p tcp --dport 443 -j ACCEPT  # iving
 #######################################
 
 
