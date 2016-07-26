@@ -1,0 +1,4 @@
+#Test using
+
+./eapol_test -c auth_pap.conf -s testing123 -n
+./eapol_test -c auth_mschapv2.conf -s testing123 -n
