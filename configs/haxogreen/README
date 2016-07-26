@@ -1,0 +1,22 @@
+This is the gateway at Conostix
+
+==IPv6==
+IPv6 has to be set-up manually as of this writing.
+
+What is required is to add an IP to both tap (openvpn) interfaces, and set-up a route for the subnet we want to route to the camp.
+
+OSPFv3 isn't configured yet, thus we by default configure the route to go over the RF link.
+
+
+# add IP to RF interface
+ip a add 2a02:6f00:1337:1::1/64 dev tap0
+
+# add IP to DSL interface
+ip a add 2a02:6f00:1337:2::1/64 dev tap1
+
+
+# route /56 subnet through (in this case RF) haxogreen router IP
+ip -6 r add 2a02:6f00:1337:100::/56 via 2a02:6f00:1337:1::2
+
+
+

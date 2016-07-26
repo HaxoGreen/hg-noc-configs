@@ -1,26 +1,27 @@
 # This file describes the network interfaces available on your system
 # and how to activate them. For more information, see interfaces(5).
 
+source /etc/network/interfaces.d/*
+
 # The loopback network interface
 auto lo
 iface lo inet loopback
 
 # The primary network interface
-allow-hotplug eth0
+auto eth0
 iface eth0 inet static
-	address 31.22.121.91
+	address 31.22.121.90
 	netmask 255.255.255.248
-	network 31.22.121.88
-	broadcast 31.22.121.95
 	gateway 31.22.121.89
-	# dns-* options are implemented by the resolvconf package, if installed
-	dns-nameservers 172.17.17.17 172.17.16.15
-	dns-search 2036.lc1.conostix.com
 
-# haxogreen <-> hggateway
-auto eth0:0
-allow-hotplug eth0:0
-iface eth0:0 inet static
-    address 10.10.1.1
-    netmask 255.255.255.0
-    up /etc/network/firewall.sh
+iface eth0 inet6 static
+        address 2a02:6f00:1337:ffff::10
+        netmask 64
+        gateway 2a02:6f00:1337:ffff::1
+
+auto eth1
+iface eth1 inet static
+	address 192.168.1.1
+	netmask 255.255.255.0
+	up /etc/network/firewall.sh
+	up /etc/network/firewall6.sh
