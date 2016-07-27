@@ -7,10 +7,6 @@ source /etc/network/interfaces.d/*
 auto lo
 iface lo inet loopback
 
-# The primary network interface
-allow-hotplug eth1
-iface eth1 inet dhcp
-
 # VLAN 141 - mngt
 auto eth0.141
 iface eth0.141 inet static
@@ -35,7 +31,7 @@ iface eth0.161 inet static
         vlan_raw_device eth0
 
 iface eth0.161 inet6 static
-	address 2a02:6f00:1337:102::/64
+	address 2a02:6f00:1337:102::1
 	netmask 64
         vlan_raw_device eth0
 
@@ -64,6 +60,14 @@ iface eth2 inet static
 	netmask 255.255.255.0
 	up /etc/network/firewall.sh
 	up /etc/network/firewall6.sh
+
+# DSL
+auto eth1
+allow-hotplug eth1
+iface eth1 inet static
+	address 192.168.178.2
+	netmask 255.255.255.0
+	up ip r add 31.22.121.90/32 via 192.168.178.1
 
 
 
