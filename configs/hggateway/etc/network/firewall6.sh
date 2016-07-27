@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# "2" is required for ipv6 as we are both a router and hosts
-# see http://vk5tu.livejournal.com/37206.html
 echo 1 > /proc/sys/net/ipv6/conf/all/forwarding
 echo 1 > /proc/sys/net/ipv6/conf/default/forwarding
 echo 1 > /proc/sys/net/ipv6/conf/all/accept_ra
@@ -20,9 +18,9 @@ ip6tables -F
 
 
 # Set default Policy for the chains
-ip6tables -P INPUT ACCEPT
+ip6tables -P INPUT DROP
 ip6tables -P OUTPUT ACCEPT
-ip6tables -P FORWARD ACCEPT
+ip6tables -P FORWARD DROP
 #########################
 
 # reject function
@@ -35,37 +33,46 @@ ip6tables -A reject_func -j REJECT
 #########################
 
 # Set global to be allowed rules
-ip6tables -A INPUT -m state --state INVALID -m limit --limit 5/m --limit-burst 10 -j LOG --log-prefix 'FW6-INVALID '
-ip6tables -A INPUT -m state --state INVALID -j DROP
-ip6tables -A OUTPUT -m state --state INVALID -j DROP
-#ip6tables -A FORWARD -m state --state INVALID -j DROP
 ip6tables -A INPUT -i lo -j ACCEPT
-
-
+ip6tables -A INPUT -s fe80::/10 -j ACCEPT
+ip6tables -A INPUT -m state --state INVALID -j DROP
 ip6tables -A INPUT -m state --state ESTABLISHED -j ACCEPT
-ip6tables -A OUTPUT -m state --state ESTABLISHED -j ACCEPT
-ip6tables -A FORWARD -m state --state RELATED,ESTABLISHED -j ACCEPT
+
+ip6tables -A INPUT -i eth2 -p ospf -j ACCEPT
+ip6tables -A INPUT -i tap0 -p ospf -j ACCEPT
+ip6tables -A INPUT -i tap1 -p ospf -j ACCEPT
+
+ip6tables -A INPUT -p ipv6-icmp -j ACCEPT # ICMPV6
+ip6tables -A INPUT -p tcp -m tcp --dport 22 -j ACCEPT
+ip6tables -A INPUT -p tcp -m tcp --dport 53 -j ACCEPT
+ip6tables -A INPUT -p udp -m udp --dport 53 -j ACCEPT
+ip6tables -A INPUT -p udp -m udp --dport 67 -j ACCEPT
+ip6tables -A INPUT -p udp -m udp --dport 68 -j ACCEPT
+ip6tables -A INPUT -p tcp -m tcp --dport 123 -j ACCEPT
+ip6tables -A INPUT -p udp -m udp --dport 123 -j ACCEPT
+ip6tables -A INPUT -i eth0.141 -j ACCEPT
 
 
+#OUTPUT
 ip6tables -A OUTPUT -o lo -j ACCEPT
-
-ip6tables -A INPUT -p ICMPV6 -j ACCEPT
-
-ip6tables -A INPUT -p tcp --dport 22 -j ACCEPT
-
+ip6tables -A OUTPUT -s fe80::/10 -j ACCEPT
+ip6tables -A OUTPUT -m state --state INVALID -j DROP
+ip6tables -A OUTPUT -m state --state ESTABLISHED -j ACCEPT
 
 
-ip6tables -A OUTPUT -p ICMPV6 -j ACCEPT
 
-ip6tables -A OUTPUT -j ACCEPT
-
-
+# FORWARD
+#ip6tables -A FORWARD -m state --state INVALID -j DROP
+ip6tables -A FORWARD -m state --state ESTABLISHED -j ACCEPT
 ip6tables -A FORWARD -p ICMPV6 -j ACCEPT
+
 ip6tables -A FORWARD -p tcp --dport 22 -j ACCEPT
 
-ip6tables -A FORWARD -o tap0 -j ACCEPT
-ip6tables -A FORWARD -i tap0 -o eth0.161 -j ACCEPT
-
+ip6tables -A FORWARD -i eth0.141 -j ACCEPT
+ip6tables -A FORWARD -i eth0.171 -j ACCEPT 
+ip6tables -A FORWARD -i eth0.161 -o tap+ -j ACCEPT
+ip6tables -A FORWARD -o tap+ -j ACCEPT
+ip6tables -A FORWARD -i tap+ -o eth0.161 -j ACCEPT
 
 
 
