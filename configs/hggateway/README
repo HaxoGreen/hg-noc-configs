@@ -1,14 +1,1 @@
 This is the router at the camp.
-
-==IPv6==
-IPv6 has to be set-up manually as of this writing.
-
-What is required is to add an IP to both tap (openvpn) interfaces.
-
-# add IP to RF interface
-ip a add 2a02:6f00:1337:1::2/64 dev tap0
-
-# add IP to DSL interface
-ip a add 2a02:6f00:1337:2::2/64 dev tap1
-
-
