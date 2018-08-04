@@ -1,0 +1,51 @@
+noc2# show run
+
+Running configuration:
+
+; J9776A Configuration Editor; Created on release #YA.16.05.0004
+; Ver #12:00.04.19.02.13.98.82.34.61.18.28.f3.84.9c.63.ff.37.27:06
+hostname "noc2"
+trunk 23-24 trk1 trunk
+ip default-gateway 172.16.0.1
+snmp-server community "public" unrestricted
+vlan 1
+   name "DEFAULT_VLAN"
+   no untagged 1-4,11,13,15,20
+   untagged 5-10,12,14,16-19,21-22,25-28,Trk1
+   ip address dhcp-bootp
+   exit
+vlan 10
+   name "public"
+   untagged 1,4,15
+   tagged Trk1
+   no ip address
+   exit
+vlan 11
+   name "public2"
+   untagged 13,20
+   tagged Trk1
+   no ip address
+   exit
+vlan 20
+   name "private"
+   tagged Trk1
+   no ip address
+   exit
+vlan 21
+   name "private2"
+   tagged Trk1
+   no ip address
+   exit
+vlan 100
+   name "mgmt"
+   untagged 2-3,11
+   tagged Trk1
+   ip address 172.16.0.14 255.255.255.0
+   exit
+vlan 150
+   name "orga"
+   tagged Trk1
+   no ip address
+   exit
+management-vlan 100
+spanning-tree Trk1 priority 4

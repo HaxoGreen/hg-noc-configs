@@ -1,0 +1,23 @@
+Package: *
+Pin: release a=stretch
+Pin-Priority: 900
+
+Package: *
+Pin: release a=stretch-updates
+Pin-Priority: 900
+
+Package: *
+Pin: release a=stretch-backports
+Pin-Priority: 450
+
+Package: *
+Pin: release a=testing
+Pin-Priority: 250
+
+Package: *
+Pin: release a=unstable
+Pin-Priority: 150
+
+Package: *
+Pin: release a=experimental
+Pin-Priority: 50

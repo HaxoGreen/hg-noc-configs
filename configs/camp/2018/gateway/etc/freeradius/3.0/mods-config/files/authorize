@@ -1,0 +1,16 @@
+haxogreen Cleartext-Password := "haxogreen"
+
+Haxogreen Cleartext-Password := "Haxogreen"
+
+HaxoGreen Cleartext-Password := "HaxoGreen"
+
+guest Cleartext-Password := "guest"
+
+orga Cleartext-Password := "verystrongpassword"
+ Aruba-User-Vlan = 150
+
+private Cleartext-Password := "verystrongpassword"
+ Aruba-User-Vlan = 20
+
+noc Cleartext-Password := "verystrongpassword"
+ Aruba-User-Vlan = 1

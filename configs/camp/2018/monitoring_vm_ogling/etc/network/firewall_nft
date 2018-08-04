@@ -1,0 +1,97 @@
+#!/usr/sbin/nft -f
+
+flush ruleset
+
+
+define subnet_orga = 172.17.0.0/24  # orga subnet
+define host_wireless_controller = 172.16.0.254
+define host_cgw = 94.242.211.1  # cgw.haxogreen.lu
+define host_monitoring = 94.242.211.3  # dashboard.haxogreen.lu
+define host_jonesi = 94.242.233.23  # muling sensor stuff rpi
+
+
+table ip nat {
+
+  chain PREROUTING {
+    type nat hook prerouting priority 0;
+  }
+
+  chain INPUT {
+    type nat hook input priority 0;
+  }
+
+  chain OUTPUT {
+    type nat hook output priority 0;
+  }
+
+  chain POSTROUTING {
+    type nat hook postrouting priority 100;
+
+  }
+
+}
+
+
+
+table inet filter {
+  chain INPUT {
+    type filter hook input priority 0;
+    policy drop;
+
+    # accept any localhost traffic
+    iifname lo counter accept
+
+    ct state invalid  counter drop
+
+    # accept traffic originated from us
+    ct state established  counter accept
+
+    icmp type { destination-unreachable, source-quench, echo-request, time-exceeded } counter accept
+
+    # accept neighbour discovery otherwise connectivity breaks
+    icmpv6 type { nd-neighbor-solicit, echo-request, nd-router-advert, nd-neighbor-advert } accept
+
+    tcp dport { 23, 135, 445 } counter drop
+
+    ip6 daddr ff02::fb udp dport 5353 counter accept  # multicast dns ?
+    ip6 saddr ::/0 udp sport 32769-65535 udp dport 33434-65535 ct state new counter accept  # traceroute
+
+    tcp dport { 21, 22, 80, 443, 10090-10100 } counter accept
+
+    ip saddr { $host_cgw, $subnet_orga, $host_jonesi } tcp dport { 8086, 2003 } counter accept  # influxdb, graphite
+
+
+    ip protocol udp drop
+    limit rate 3/minute burst 5 packets counter log prefix "NFT DROP all-input FW-IN " drop
+  }
+
+  chain FORWARD {
+    type filter hook forward priority 0;
+    policy drop;
+  }
+
+  chain OUTPUT {
+    type filter hook output priority 0;
+    policy accept;
+
+    ct state invalid  counter drop
+    ct state established  counter accept
+
+    oifname lo counter accept
+
+    ip6 nexthdr icmpv6 counter accept
+    ip6 daddr ff02::fb udp dport 5353 counter accept  # multicast dns ?
+
+#    limit rate 3/minute burst 5 packets counter log prefix "NFT OUTPUT-DROP " drop
+  }
+}
+
+table filter {
+    ct helper ftp-standard {
+     type "ftp" protocol tcp
+  }
+  chain prerouting {
+      type filter hook prerouting priority 0;
+      tcp dport 21 ct helper set "ftp-standard"
+  }
+}

@@ -1,0 +1,8 @@
+label: dos
+label-id: 0x43c98637
+device: /dev/sdb
+unit: sectors
+
+/dev/sdb1 : start=        2048, size=   453122048, type=fd, bootable
+/dev/sdb2 : start=   453126142, size=    15622146, type=5
+/dev/sdb5 : start=   453126144, size=    15622144, type=fd

@@ -1,0 +1,3 @@
+#
+
+* * * * *  root  /opt/dhcp_influx/run.sh &> /dev/null

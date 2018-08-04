@@ -1,0 +1,80 @@
+NOC# show run
+
+Running configuration:
+
+; J8692A Configuration Editor; Created on release #K.16.02.0022m
+; Ver #10:08.03.81.30.02.34.59.2c.6b.ff.f7.fc.7f.ff.3f.ef:26
+hostname "NOC"
+module 1 type j86xxa
+module 3 type j8694a
+trunk 19-20 trk1 trunk
+trunk 11-12 trk2 trunk
+ip default-gateway 172.16.0.1
+interface 1
+   name "wifi-internal-0"
+   exit
+interface 2
+   name "ceasars1-7"
+   exit
+interface 3
+   name "AP318"
+   exit
+interface 4
+   name "Wifi-Traffic-1"
+   exit
+interface 6
+   name "caesars1-6"
+   exit
+snmp-server community "public" operator
+vlan 1
+   name "DEFAULT_VLAN"
+   no untagged 1,3,5-9,13-14
+   untagged 2,4,10,15-18,21-24,A1-A4,Trk1-Trk2
+   no ip address
+   exit
+vlan 10
+   name "public"
+   untagged 6
+   tagged 4,Trk1-Trk2
+   no ip address
+   exit
+vlan 11
+   name "public2"
+   untagged 5
+   tagged 4,Trk1-Trk2
+   no ip address
+   exit
+vlan 20
+   name "private"
+   untagged 7
+   tagged 4,Trk1-Trk2
+   no ip address
+   exit
+vlan 21
+   name "private2"
+   untagged 8
+   tagged 4,Trk1-Trk2
+   no ip address
+   exit
+vlan 100
+   name "WIFI"
+   untagged 1,3,13-14
+   tagged 2,Trk1-Trk2
+   ip address 172.16.0.10 255.255.255.0
+   exit
+vlan 150
+   name "orga"
+   untagged 9
+   tagged 2,4,Trk1-Trk2
+   no ip address
+   exit
+management-vlan 100
+spanning-tree Trk1 priority 4
+spanning-tree Trk2 priority 4
+no tftp server
+no autorun
+no dhcp config-file-update
+no dhcp image-file-update
+device-profile name "default-ap-profile"
+   cos 0
+   exit

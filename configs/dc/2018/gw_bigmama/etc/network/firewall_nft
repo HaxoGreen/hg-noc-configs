@@ -1,0 +1,132 @@
+#!/usr/sbin/nft -f
+
+flush ruleset
+
+
+define int_uplink = enp2s0  # uplink root
+define int_haxogreen_rf = enp2s0.849  # RF uplink to haxogreen
+define int_haxogreen_vpn_rf = wg0-rf  # RF wireguard interface
+define host_monitoring_vm_4 = 94.242.211.3
+
+
+table ip nat {
+
+  chain PREROUTING {
+    type nat hook prerouting priority 0;
+  }
+
+  chain INPUT {
+    type nat hook input priority 0;
+  }
+
+  chain OUTPUT {
+    type nat hook output priority 0;
+  }
+
+  chain POSTROUTING {
+    type nat hook postrouting priority 100;
+
+    oifname $int_uplink ip protocol != ipv6 ip saddr 10.50.1.2 counter masquerade
+
+#    oifname $int_uplink ip protocol != ipv6 counter masquerade 
+#    oifname $int_ppp_raw ip protocol != ipv6 counter masquerade 
+  }
+
+}
+
+
+
+table inet filter {
+  chain INPUT {
+    type filter hook input priority 0;
+    policy drop;
+
+    # accept any localhost traffic
+    iifname lo counter accept
+
+    ct state invalid  counter drop
+
+    # accept traffic originated from us
+    ct state established  counter accept
+
+    icmp type { destination-unreachable, source-quench, echo-request, time-exceeded } counter accept
+
+    # accept neighbour discovery otherwise connectivity breaks
+    icmpv6 type { nd-neighbor-solicit, echo-request, nd-router-advert, nd-neighbor-advert } accept
+
+    iifname $int_uplink tcp dport { 23, 135, 445 } counter drop
+
+    ip6 daddr ff02::fb udp dport 5353 counter accept  # multicast dns ?
+    ip6 saddr ::/0 udp sport 32769-65535 udp dport 33434-65535 ct state new counter accept  # traceroute
+
+    iifname $int_haxogreen_rf counter accept
+    iifname $int_haxogreen_vpn_rf counter accept
+
+    iifname $int_uplink tcp dport { 22 } counter accept
+    iifname $int_haxogreen_rf tcp dport { 22, 53, 123 } counter accept
+    iifname $int_haxogreen_rf udp dport { 53, 123 } counter accept
+
+    iifname $int_uplink counter drop
+    iifname $int_haxogreen_rf drop
+    iifname $int_haxogreen_vpn_rf drop
+
+    iifname $int_uplink limit rate 3/minute burst 5 packets counter log prefix "NFT DROP uplink FW-IN " drop
+    iifname $int_haxogreen_rf limit rate 3/minute burst 5 packets counter log prefix "NFT DROP haxogreen_rf FW-IN " drop
+    iifname $int_haxogreen_vpn_rf limit rate 3/minute burst 5 packets counter log prefix "NFT DROP haxogreen_vpn_rf FW-IN " drop
+  }
+
+  chain FORWARD {
+    type filter hook forward priority 0;
+    policy drop;
+
+    # Drop Packets from non routable IPs, on the external interface and general drop rules
+    iifname $int_uplink ip saddr { 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16 } counter drop
+    iifname $int_uplink ip daddr 192.168.0.0/16 ct state new  counter drop
+    iifname $int_uplink oifname $int_uplink counter drop
+
+    # block rules
+    iifname $int_uplink tcp dport { 23, 135, 445, 51413 } counter drop
+    iifname $int_uplink udp dport { 51413 } counter drop
+
+    ct state invalid  counter drop
+    ct state established  counter accept
+
+    # clamp MSS to PMTU -> only supported on nftables >= 0.9
+    oifname $int_uplink tcp flags syn tcp option maxseg size set 1420
+
+    icmp type { destination-unreachable, source-quench, echo-request, time-exceeded } counter accept
+
+    # accept neighbour discovery otherwise connectivity breaks
+    icmpv6 type { nd-neighbor-solicit, echo-request, nd-router-advert, nd-neighbor-advert } accept
+
+    iifname $int_haxogreen_vpn_rf oifname $int_uplink counter accept
+
+    # monitoring VM
+    iifname $int_uplink ip daddr $host_monitoring_vm_4 tcp dport { 80, 443 } counter accept  # monitoring VM
+    iifname $int_uplink ip daddr $host_monitoring_vm_4 counter drop  # drop anything else
+
+    iifname $int_uplink oifname $int_haxogreen_vpn_rf ip protocol tcp counter accept
+
+    limit rate 3/minute burst 5 packets counter log prefix "NFT FWD-DROP " drop
+  }
+
+  chain OUTPUT {
+    type filter hook output priority 0;
+    policy drop;
+
+    ct state invalid  counter drop
+    ct state established  counter accept
+
+    oifname lo counter accept
+
+    oifname $int_uplink counter accept
+    oifname $int_haxogreen_rf counter accept
+    oifname $int_haxogreen_vpn_rf counter accept
+
+    ip6 nexthdr icmpv6 counter accept
+    ip6 daddr ff02::fb udp dport 5353 counter accept  # multicast dns ?
+
+    limit rate 3/minute burst 5 packets counter log prefix "NFT OUTPUT-DROP " drop
+  }
+}
+

@@ -1,0 +1,64 @@
+# This file describes the network interfaces available on your system
+# and how to activate them. For more information, see interfaces(5).
+
+source /etc/network/interfaces.d/*
+
+# The loopback network interface
+auto lo
+iface lo inet loopback
+
+# The primary network interface
+iface eno1 inet manual
+
+auto eno1.100
+iface eno1.100 inet static
+  address 172.16.0.1/24
+  vlan_raw_device eno1
+
+  up /usr/sbin/nft -f /etc/network/firewall_nft
+  up /etc/network/kernel_setup.sh
+
+auto eno1.150
+iface eno1.150 inet static
+  address 172.17.0.1/24
+  vlan_raw_device eno1
+
+
+# VLAN10 - tagged - public subnet1
+auto enp9s0
+iface enp9s0 inet static
+  address 94.242.211.1/24
+
+iface enp9s0 inet6 static
+  address 2a01:608:ffff:8268::1/64
+
+
+# VLAN11 - tagged - public subnet2
+auto enp8s0
+iface enp8s0 inet static
+  address 94.242.233.1/24
+
+iface enp8s0 inet6 static
+  address 2a01:608:ffff:a03e::1/64
+
+
+# RF <-> DC uplink
+auto enp3s0
+iface enp3s0 inet static
+  address 10.50.0.2/24
+
+  up ip a add 192.168.1.1/24 dev enp3s0
+
+
+# Wireguard RF
+auto wg-rf
+iface wg-rf inet static
+  address 10.50.1.2/24
+  pre-up ip link add $IFACE type wireguard
+  pre-up wg setconf $IFACE /etc/wireguard/$IFACE.conf
+  post-down ip link del $IFACE
+
+iface wg-rf inet6 static
+  address 2a01:608:ffff:a017::2/64
+  gateway 2a01:608:ffff:a017::1
+

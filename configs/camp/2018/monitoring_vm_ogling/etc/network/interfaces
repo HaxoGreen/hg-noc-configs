@@ -1,0 +1,22 @@
+# This file describes the network interfaces available on your system
+# and how to activate them. For more information, see interfaces(5).
+
+source /etc/network/interfaces.d/*
+
+# The loopback network interface
+auto lo
+iface lo inet loopback
+
+# The primary network interface
+auto ens3
+iface ens3 inet static
+	address 94.242.211.3/24
+	gateway 94.242.211.1
+
+	up /usr/sbin/nft -f /etc/network/firewall_nft
+
+
+auto ens9
+iface ens9 inet static
+	address 172.16.0.16/24
+

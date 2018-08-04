@@ -1,0 +1,2 @@
+*/1 * * * * root /root/aruba/aruba_cli_stats.sh > /dev/null
+*/1 * * * * root /root/aruba/aruba_snmp_stats.sh > /dev/null

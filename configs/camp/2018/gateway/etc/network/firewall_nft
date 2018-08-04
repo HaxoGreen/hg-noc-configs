@@ -1,0 +1,148 @@
+#!/usr/sbin/nft -f
+
+flush ruleset
+
+
+define int_haxogreen_rf = enp3s0  # RF uplink to haxogreen
+define int_haxogreen_vpn_rf = wg-rf  # RF wireguard interface
+define int_public_range1 = enp8s0  # public IP range 1
+define int_public_range2 = enp9s0  # public IP range 2
+define int_mngt = eno1.100  # management interface
+define int_orga = eno1.150  # orga interface
+define subnet_orga = 172.17.0.0/24  # orga subnet
+define host_wireless_controller = 172.16.0.254
+define host_cgw = 94.242.211.1  # cgw.haxogreen.lu
+define host_monitoring = 94.242.211.3  # dashboard.haxogreen.lu
+
+
+table ip nat {
+
+  chain PREROUTING {
+    type nat hook prerouting priority 0;
+  }
+
+  chain INPUT {
+    type nat hook input priority 0;
+  }
+
+  chain OUTPUT {
+    type nat hook output priority 0;
+  }
+
+  chain POSTROUTING {
+    type nat hook postrouting priority 100;
+
+    oifname $int_haxogreen_vpn_rf ip protocol != ipv6 ip saddr $subnet_orga counter masquerade
+
+#    oifname $int_uplink ip protocol != ipv6 counter masquerade 
+#    oifname $int_ppp_raw ip protocol != ipv6 counter masquerade 
+  }
+
+}
+
+
+
+table inet filter {
+  chain INPUT {
+    type filter hook input priority 0;
+    policy drop;
+
+    # accept any localhost traffic
+    iifname lo counter accept
+
+    ct state invalid  counter drop
+
+    # accept traffic originated from us
+    ct state established  counter accept
+
+    icmp type { destination-unreachable, source-quench, echo-request, time-exceeded } counter accept
+
+    # accept neighbour discovery otherwise connectivity breaks
+    icmpv6 type { nd-neighbor-solicit, echo-request, nd-router-advert, nd-neighbor-advert } accept
+
+    iifname $int_haxogreen_rf tcp dport { 23, 135, 445 } counter drop
+
+    iifname $int_haxogreen_rf tcp dport { 51820 } counter accept  # wireguard
+
+    ip6 daddr ff02::fb udp dport 5353 counter accept  # multicast dns ?
+    ip6 saddr ::/0 udp sport 32769-65535 udp dport 33434-65535 ct state new counter accept  # traceroute
+
+    tcp dport { 22, 80 } counter accept
+
+    iifname $int_haxogreen_rf udp dport { 123 } counter accept
+
+    iifname { $int_public_range1, $int_public_range2, $int_orga, $int_mngt } tcp dport { 22, 53 } counter accept
+    iifname { $int_public_range1, $int_public_range2, $int_orga } udp dport { 53, 67, 68, 123 } counter accept
+
+    iifname $int_mngt udp dport { 53, 123 } counter accept
+
+    iifname $int_haxogreen_rf drop
+    iifname $int_haxogreen_vpn_rf drop
+
+    ip saddr $host_monitoring tcp dport { 3000, 443 } counter accept
+    iifname $int_orga ip daddr $host_cgw tcp dport { 80, 443 } counter accept
+
+    iifname $int_mngt udp dport { 1812, 1813 } counter accept  # radius from the wifi controller
+
+
+    iifname $int_haxogreen_rf limit rate 3/minute burst 5 packets counter log prefix "NFT DROP haxogreen_rf FW-IN " drop
+    iifname $int_haxogreen_vpn_rf limit rate 3/minute burst 5 packets counter log prefix "NFT DROP haxogreen_vpn_rf FW-IN " drop
+    limit rate 3/minute burst 5 packets counter log prefix "NFT DROP all-input FW-IN " drop
+  }
+
+  chain FORWARD {
+    type filter hook forward priority 0;
+    policy drop;
+
+    # block rules
+    oifname $int_haxogreen_vpn_rf tcp sport { 51413 } counter drop
+    oifname $int_haxogreen_vpn_rf udp sport { 6881, 51413 } counter drop
+
+    ct state invalid  counter drop
+    ct state established  counter accept
+
+    # clamp MSS to PMTU -> only supported on nftables >= 0.9
+    oifname $int_haxogreen_vpn_rf tcp flags syn tcp option maxseg size set rt mtu
+
+    icmp type { destination-unreachable, source-quench, echo-request, time-exceeded } counter accept
+
+    # accept neighbour discovery otherwise connectivity breaks
+    icmpv6 type { nd-neighbor-solicit, echo-request, nd-router-advert, nd-neighbor-advert } accept
+
+    iifname { $int_public_range1, $int_public_range2 } oifname { $int_public_range1, $int_public_range2 } counter accept
+
+    iifname $int_public_range1 oifname $int_haxogreen_vpn_rf counter accept
+    iifname $int_haxogreen_vpn_rf oifname $int_public_range1 ip protocol tcp counter accept
+
+    iifname $int_public_range2 oifname $int_haxogreen_vpn_rf counter accept
+    iifname $int_haxogreen_vpn_rf oifname $int_public_range2 ip protocol tcp counter accept
+
+    iifname { $int_public_range1, $int_public_range2} ip daddr 94.242.211.3 tcp dport { 21, 10090-10100 } counter accept
+
+    iifname $int_orga oifname { $int_haxogreen_vpn_rf, $int_public_range1, $int_public_range2 } counter accept
+    iifname $int_orga oifname $int_mngt ip daddr $host_wireless_controller tcp dport { 22, 4343 } counter accept
+    
+    # allow monitoring VM access to RF antennas both sides
+    iifname $int_public_range2 oifname $int_haxogreen_rf ip daddr { 192.168.1.2, 192.168.1.3 } counter accept
+    iifname $int_orga oifname $int_haxogreen_rf ip daddr { 192.168.1.2, 192.168.1.3 } tcp dport { 22, 443 } counter accept
+
+
+    limit rate 3/minute burst 5 packets counter log prefix "NFT FWD-DROP " drop
+  }
+
+  chain OUTPUT {
+    type filter hook output priority 0;
+    policy accept;
+
+    ct state invalid  counter drop
+    ct state established  counter accept
+
+    oifname lo counter accept
+
+    ip6 nexthdr icmpv6 counter accept
+    ip6 daddr ff02::fb udp dport 5353 counter accept  # multicast dns ?
+
+#    limit rate 3/minute burst 5 packets counter log prefix "NFT OUTPUT-DROP " drop
+  }
+}
+
